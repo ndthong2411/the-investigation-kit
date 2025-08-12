@@ -1,0 +1,30 @@
+{
+  "case": {
+    "id": "case-0001",
+    "title": "Case 0001 — Sample",
+    "people": [
+      { "id": "p-001", "name": null, "dob": null, "address": null, "occupation": null, "accepted": {} }
+    ],
+    "sources": [
+      { "id": "s-001", "title": "Citizen DB" },
+      { "id": "s-002", "title": "Social Feed" }
+    ],
+    "documents": [
+      { "id": "doc_0001", "source_id": "s-001", "title": "Registry Entry", "path": "tik/data/docs/doc_0001.html" }
+    ]
+  },
+  "objectives": [
+    {
+      "id": "obj-001",
+      "title": "Identify subject's name and date of birth",
+      "expr": {
+        "kind": "AND",
+        "children": [
+          { "kind": "LEAF", "predicate": { "op": "exists", "path": "person.name" } },
+          { "kind": "LEAF", "predicate": { "op": "exists", "path": "person.dob" } }
+        ]
+      },
+      "satisfied": false
+    }
+  ]
+}

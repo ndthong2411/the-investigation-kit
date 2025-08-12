@@ -1,0 +1,23 @@
+body {
+  background: #0e141b;
+  color: #d7e3f4;
+  font-family: Segoe UI, Inter, Arial, sans-serif;
+  line-height: 1.5;
+  padding: 16px;
+}
+#container {
+  background: #2f2f2f;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  padding: 16px;
+}
+span.chunk {
+  background: rgba(88,166,255,0.12);
+  border-bottom: 1px dashed #58a6ff;
+  cursor: grab;
+  -webkit-user-drag: element;  /* giúp Chromium coi đây là phần tử kéo được */
+  user-select: none;           /* tránh bôi đen chữ khi kéo */
+}
+span.chunk.hover {
+  background: rgba(88,166,255,0.22);
+}

@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tik"
+version = "0.1.0"
+description = "The Investigation Kit (Phase 1) — Orwell-style 2-pane PyQt6 desktop app"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "DevPilot" }]
+dependencies = [
+    "PyQt6>=6.6",
+    "PyQt6-WebEngine>=6.6",
+    "pydantic>=2.6,<3",
+    "loguru>=0.7",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-qt>=4", "ruff>=0.5"]
+
+[tool.setuptools]
+packages = ["tik"]
+
+[tool.setuptools.package-data]
+tik = [
+    "ui/web/*.html",
+    "ui/web/*.css",
+    "ui/web/*.js",
+    "data/*.json",
+    "data/docs/*.html",
+    "data/chunks/*.json",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

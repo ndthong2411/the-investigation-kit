@@ -1,0 +1,52 @@
+[
+  {
+    "id": "c-001",
+    "document_id": "doc_0001",
+    "source_id": "s-001",
+    "field": "name",
+    "value": "Jane Doe",
+    "offset_start": 32,
+    "offset_end": 40,
+    "exclusive_group": "identity"
+  },
+  {
+    "id": "c-002",
+    "document_id": "doc_0001",
+    "source_id": "s-001",
+    "field": "dob",
+    "value": "1990-01-23",
+    "offset_start": 52,
+    "offset_end": 62,
+    "exclusive_group": "dob"
+  },
+  {
+    "id": "c-003",
+    "document_id": "doc_0001",
+    "source_id": "s-001",
+    "field": "address",
+    "value": "42 Evergreen Terrace",
+    "offset_start": 74,
+    "offset_end": 95,
+    "exclusive_group": "address"
+  },
+  {
+    "id": "c-004",
+    "document_id": "doc_0001",
+    "source_id": "s-001",
+    "field": "occupation",
+    "value": "Research Analyst",
+    "offset_start": 118,
+    "offset_end": 133,
+    "exclusive_group": "occupation"
+  },
+  {
+    "id": "c-005",
+    "document_id": "doc_0001",
+    "source_id": "s-002",
+    "field": "name",
+    "value": "Jane A. Doe",
+    "offset_start": 32,
+    "offset_end": 40,
+    "exclusive_group": "identity"
+  }
+]
