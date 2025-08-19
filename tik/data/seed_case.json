@@ -2,6 +2,12 @@
   "case": {
     "id": "case-0001",
     "title": "Case 0001 — Sample",
+    "schema": [
+      { "id": "name", "label": "Name", "type": "text", "exclusive_group": "identity" },
+      { "id": "dob", "label": "Date of Birth", "type": "date", "exclusive_group": "dob" },
+      { "id": "address", "label": "Address", "type": "text", "exclusive_group": "address" },
+      { "id": "occupation", "label": "Occupation", "type": "text", "exclusive_group": "occupation" }
+    ],
     "people": [
       { "id": "p-001", "name": null, "dob": null, "address": null, "occupation": null, "accepted": {} }
     ],
@@ -16,12 +22,12 @@
   "objectives": [
     {
       "id": "obj-001",
-      "title": "Identify subject's name and date of birth",
+      "title": "Có Name & Date of Birth (record)",
       "expr": {
         "kind": "AND",
         "children": [
-          { "kind": "LEAF", "predicate": { "op": "exists", "path": "person.name" } },
-          { "kind": "LEAF", "predicate": { "op": "exists", "path": "person.dob" } }
+          { "kind": "LEAF", "predicate": { "op": "exists", "path": "record.name" } },
+          { "kind": "LEAF", "predicate": { "op": "exists", "path": "record.dob" } }
         ]
       },
       "satisfied": false

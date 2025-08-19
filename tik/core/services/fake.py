@@ -8,7 +8,7 @@ from typing import List, Tuple, Optional
 from pydantic import TypeAdapter
 
 from ..models import (
-    Case, Person, Source, Document, DataChunk, Objective, ObjectiveExpr, ObjectivePredicate, AdvisorEvent, AcceptedChunk
+    Case, Person, Source, Document, DataChunk, Objective, ObjectiveExpr, ObjectivePredicate, AdvisorEvent
 )
 from ..document_renderer import wrap_chunks_into_html
 from .base import CaseService, DocumentService, ChunkService, ObjectiveService, EventService
@@ -24,9 +24,7 @@ class FakeCaseService(CaseService):
         seed_path = self.data_dir / "seed_case.json"
         data = json.loads(seed_path.read_text(encoding="utf-8"))
         case = Case.model_validate(data["case"])
-        # Load objectives
         self._objectives = TypeAdapter(List[Objective]).validate_python(data.get("objectives", []))
-        # Attach objectives back to case via private attr for retrieval by ObjectiveService
         case._objectives = self._objectives  # type: ignore[attr-defined]
         self._case = case
         return case
@@ -42,7 +40,6 @@ class FakeDocumentService(DocumentService):
         html = doc_html_path.read_text(encoding="utf-8")
         chunks = TypeAdapter(List[DataChunk]).validate_python(json.loads(chunks_path.read_text(encoding="utf-8")))
         wrapped_html = wrap_chunks_into_html(html, chunks)
-        # For WebEngine, also pass chunks as JSON list for client-side DnD attrs (redundant but handy to inspect)
         return wrapped_html, [c.model_dump() for c in chunks]
 
 
@@ -69,13 +66,14 @@ class FakeObjectiveService(ObjectiveService):
         if expr.kind == "LEAF" and expr.predicate:
             pred = expr.predicate
             if pred.op == "exists":
-                _, field = pred.path.split(".", 1)
+                # chấp nhận cả 'person.xxx' lẫn 'record.xxx'
+                _, field = pred.path.split(".", 1) if "." in pred.path else ("record", pred.path)
                 return field in person.accepted and bool(person.accepted[field].value)
             return False
         if expr.kind == "AND":
-            return all(self._eval_expr(c, person) for c in expr.children or [])
+            return all(self._eval_expr(c, person) for c in (expr.children or []))
         if expr.kind == "OR":
-            return any(self._eval_expr(c, person) for c in expr.children or [])
+            return any(self._eval_expr(c, person) for c in (expr.children or []))
         return False
 
 

@@ -1,15 +1,26 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Dict, Optional, Tuple
+from pathlib import Path
+from typing import Callable, Optional
 
 from loguru import logger
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtGui import QUndoStack
 
-from .models import Case, Person, Source, Document, DataChunk, AcceptedChunk, Objective, AdvisorEvent
 from .commands import AcceptChunkCommand, ResolveConflictCommand, RetractChunkCommand
-from .services.base import CaseService, DocumentService, ChunkService, ObjectiveService, EventService
+from .models import (
+    AcceptedChunk,
+    AdvisorEvent,
+    Case,
+    DataChunk,
+    Document,
+    Objective,
+    Person,
+    Source,
+)
+from .services.base import CaseService, ChunkService, DocumentService, EventService, ObjectiveService
+from .persistence import load_record_json, save_record_json
 
 
 @dataclass
@@ -28,22 +39,26 @@ class Store(QObject):
     objectivesChanged = pyqtSignal()
     advisorEvent = pyqtSignal(object)  # AdvisorEvent
 
-    def __init__(self, *, case_service: CaseService, document_service: DocumentService,
-                 chunk_service: ChunkService, objective_service: ObjectiveService,
-                 event_service: EventService):
+    def __init__(
+        self,
+        *,
+        case_service: CaseService,
+        document_service: DocumentService,
+        chunk_service: ChunkService,
+        objective_service: ObjectiveService,
+        event_service: EventService,
+    ):
         super().__init__()
         self.case_svc = case_service
         self.doc_svc = document_service
         self.chunk_svc = chunk_service
         self.obj_svc = objective_service
         self.evt_svc = event_service
-
         self.sel = Selection()
         self.undo_stack = QUndoStack(self)
         self._conflict_resolver: Optional[Callable[[AcceptedChunk, DataChunk], Optional[AcceptedChunk]]] = None
 
     # === Bootstrapping & selection ===
-
     def load_default_case(self) -> None:
         case = self.case_svc.load_default_case()
         self.sel.case = case
@@ -67,13 +82,17 @@ class Store(QObject):
         self.selectionChanged.emit()
 
     # === Accept / retract / conflicts ===
-
     def request_accept(self, chunk: DataChunk) -> None:
         person = self.sel.person
         if not person:
             return
         current = person.accepted.get(chunk.field)
-        if current and current.exclusive_group and chunk.exclusive_group and current.exclusive_group == chunk.exclusive_group:
+        if (
+            current
+            and current.exclusive_group
+            and chunk.exclusive_group
+            and current.exclusive_group == chunk.exclusive_group
+        ):
             # No-op if identical chunk
             if current.chunk_id == chunk.id:
                 logger.debug("Accept idempotent for chunk {}", chunk.id)
@@ -90,7 +109,6 @@ class Store(QObject):
         else:
             cmd = AcceptChunkCommand(person, chunk)
             self.undo_stack.push(cmd)
-
         # Objectives re-eval
         self.evaluate_objectives()
         self.acceptedChanged.emit()
@@ -105,7 +123,6 @@ class Store(QObject):
         self.acceptedChanged.emit()
 
     # === Objectives & events ===
-
     def evaluate_objectives(self) -> None:
         case = self.sel.case
         person = self.sel.person
@@ -120,3 +137,24 @@ class Store(QObject):
         if evt:
             self.advisorEvent.emit(evt)
             logger.info("Advisor: {}", evt.text)
+
+    # === Persistence (simple JSON) ===
+    def save_to_path(self, path: Path) -> bool:
+        if not self.sel.case or not self.sel.person:
+            return False
+        save_record_json(Path(path), self.sel.case, self.sel.person)
+        logger.info("Saved record JSON to {}", path)
+        return True
+
+    def load_from_path(self, path: Path) -> bool:
+        if not self.sel.case or not self.sel.person:
+            return False
+        data = load_record_json(Path(path))
+        accepted = {}
+        for field, obj in (data.get("accepted") or {}).items():
+            accepted[field] = AcceptedChunk.model_validate(obj)
+        self.sel.person.accepted = accepted
+        self.evaluate_objectives()
+        self.acceptedChanged.emit()
+        logger.info("Loaded record JSON from {}", path)
+        return True

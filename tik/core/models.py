@@ -4,14 +4,20 @@ from typing import List, Optional, Dict, Literal
 from pydantic import BaseModel, Field
 
 
+class FieldDef(BaseModel):
+    id: str                     # ví dụ: "name", "dob", "definition", ...
+    label: str                  # nhãn hiển thị
+    type: Literal["text", "date", "number", "url", "note"] = "text"
+    exclusive_group: Optional[str] = None  # nhóm độc quyền mặc định cho field (nếu có)
+
+
 class Person(BaseModel):
     id: str
     name: Optional[str] = None
     dob: Optional[str] = None
     address: Optional[str] = None
     occupation: Optional[str] = None
-    # accepted values indexed by field
-    accepted: Dict[str, "AcceptedChunk"] = Field(default_factory=dict)
+    accepted: Dict[str, "AcceptedChunk"] = Field(default_factory=dict)  # field -> AcceptedChunk
 
 
 class Source(BaseModel):
@@ -30,11 +36,16 @@ class DataChunk(BaseModel):
     id: str
     document_id: str
     source_id: str
-    field: str                 # e.g., "name", "dob"
+    field: str
     value: str
     offset_start: int
     offset_end: int
-    exclusive_group: Optional[str] = None  # conflicts within same field
+    exclusive_group: Optional[str] = None
+    # --- mới cho nghiên cứu ---
+    quote: Optional[str] = None       # trích nguyên văn (nếu muốn giữ nguyên dấu câu/chữ hoa)
+    locator: Optional[str] = None     # vị trí trong tài liệu (vd: "p.12, para.3")
+    confidence: Optional[float] = None  # 0..1: độ tin cậy sơ bộ
+    tags: List[str] = Field(default_factory=list)
 
 
 class AcceptedChunk(BaseModel):
@@ -44,6 +55,11 @@ class AcceptedChunk(BaseModel):
     source_id: str
     document_id: str
     exclusive_group: Optional[str] = None
+    # --- giữ provenance mở rộng ---
+    quote: Optional[str] = None
+    locator: Optional[str] = None
+    confidence: Optional[float] = None
+    tags: List[str] = Field(default_factory=list)
 
 
 class Case(BaseModel):
@@ -52,16 +68,20 @@ class Case(BaseModel):
     people: List[Person]
     sources: List[Source]
     documents: List[Document]
+    # --- schema động cho Profiler ---
+    schema: List[FieldDef] = Field(default_factory=list)
 
 
 class ObjectivePredicate(BaseModel):
-    """Minimal predicate system: op in {'exists'} with a path like 'person.name'."""
+    """
+    Minimal predicate: op='exists' với path như 'record.name' hoặc 'person.name'.
+    Ta chấp nhận cả 2 prefix để dùng cho nghiên cứu (record) lẫn điều tra (person).
+    """
     op: Literal["exists"]
-    path: str  # "person.<field>"
+    path: str
 
 
 class ObjectiveExpr(BaseModel):
-    """Boolean tree: kind 'AND' or 'OR' with either children or a predicate leaf."""
     kind: Literal["AND", "OR", "LEAF"]
     children: Optional[List["ObjectiveExpr"]] = None
     predicate: Optional[ObjectivePredicate] = None
